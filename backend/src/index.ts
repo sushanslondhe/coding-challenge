@@ -4,6 +4,7 @@ import mongoose from "mongoose";
 
 export const THIRD_API_URL =
   "https://s3.amazonaws.com/roxiler.com/product_transaction.json";
+
 const app = express();
 app.use(express.json());
 
@@ -16,9 +17,9 @@ app.get("/", (req, res) => {
 app.use("/api/stats", statsRouter);
 
 mongoose
-  .connect("mongodb://localhost:27017/data")
+  .connect("mongodb://localhost:27017/new2")
   .then(() => {
-    app.listen(3000, () => {
+    app.listen(3005, () => {
       console.log("port connected on 3000");
     });
   })

@@ -1,5 +1,5 @@
 import axios from "axios";
-import { Router } from "express";
+import { response, Router } from "express";
 import mongoose from "mongoose";
 import { THIRD_API_URL } from "..";
 import { Transaction } from "../Schemas/schemas";
@@ -19,5 +19,45 @@ statsRouter.get("/init", async (req, res) => {
     });
   } catch (e) {
     console.log("something went wrong");
+  }
+});
+
+statsRouter.get("/total", async (req, res) => {
+  const { month } = await req.query;
+
+  try {
+    const soldItems = await Transaction.find({
+      sold: true,
+      $expr: {
+        $eq: [{ $month: "$dateOfSale" }, month],
+      },
+    });
+    const countSold = await Transaction.countDocuments({
+      sold: true,
+      $expr: {
+        $eq: [{ $month: "$dateOfSale" }, month],
+      },
+    });
+    const totalSaleAmount = soldItems.reduce(
+      // @ts-ignore
+      (total, item) => total + item.price,
+      0
+    );
+
+    const unsoldItems = await Transaction.countDocuments({
+      sold: false,
+      $expr: {
+        $eq: [{ $month: "$dateOfSale" }, month],
+      },
+    });
+    res.json({
+      totalSaleAmount: totalSaleAmount,
+      NumberOfItemsSold: countSold,
+      unsoldItems,
+    });
+  } catch (error) {
+    res.json({
+      msg: "error! something went wrong",
+    });
   }
 });

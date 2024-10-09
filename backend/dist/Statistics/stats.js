@@ -23,11 +23,48 @@ exports.statsRouter.get("/init", (req, res) => __awaiter(void 0, void 0, void 0,
         const response = yield axios_1.default.get(__1.THIRD_API_URL);
         yield schemas_1.Transaction.deleteMany({});
         yield schemas_1.Transaction.insertMany(response.data);
+        yield schemas_1.Transaction.find({});
         res.json({
             msg: "Database initialize sucessfully",
         });
     }
     catch (e) {
         console.log("something went wrong");
+    }
+}));
+exports.statsRouter.get("/total", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { month } = yield req.query;
+    try {
+        const soldItems = yield schemas_1.Transaction.find({
+            sold: true,
+            $expr: {
+                $eq: [{ $month: "$dateOfSale" }, month],
+            },
+        });
+        const countSold = yield schemas_1.Transaction.countDocuments({
+            sold: true,
+            $expr: {
+                $eq: [{ $month: "$dateOfSale" }, month],
+            },
+        });
+        const totalSaleAmount = soldItems.reduce(
+        // @ts-ignore
+        (total, item) => total + item.price, 0);
+        const unsoldItems = yield schemas_1.Transaction.countDocuments({
+            sold: false,
+            $expr: {
+                $eq: [{ $month: "$dateOfSale" }, month],
+            },
+        });
+        res.json({
+            totalSaleAmount: totalSaleAmount,
+            NumberOfItemsSold: countSold,
+            unsoldItems,
+        });
+    }
+    catch (error) {
+        res.json({
+            msg: "error! something went wrong",
+        });
     }
 }));
