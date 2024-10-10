@@ -32,6 +32,70 @@ exports.statsRouter.get("/init", (req, res) => __awaiter(void 0, void 0, void 0,
         console.log("something went wrong");
     }
 }));
+exports.statsRouter.get("/get", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        let { month = "March", search = "", page = 1, perPage = 10, sortField = "dateOfSale", sortDirection = "asc", } = req.query;
+        month = month || "March";
+        const monthNumber = new Date(Date.parse(`${month} 1, 2000`)).getMonth() + 1;
+        // Validating the month parameter
+        // if (!(monthNumber >= 1 && monthNumber <= 12)) {
+        //   return res.status(400).json({
+        //     error: "Invalid month parameter. Please provide a valid month.",
+        //   });
+        // }
+        // Validating pagination parameters
+        // if (page < 1 || perPage < 1) {
+        //   return res.status(400).json({
+        //     error: "Invalid pagination parameters. Please provide valid values.",
+        //   });
+        // }
+        // @ts-ignore
+        const isNumericSearch = /^[0-9.]+$/.test(search);
+        const filter = Object.assign({ $expr: {
+                $eq: [
+                    {
+                        $month: {
+                            $dateFromString: {
+                                dateString: { $toString: "$dateOfSale" },
+                                format: "%Y-%m-%dT%H:%M:%S.%LZ",
+                            },
+                        },
+                    },
+                    monthNumber,
+                ],
+            } }, (search !== "" && {
+            $or: [
+                ...(isNumericSearch
+                    ? // @ts-ignore
+                        [{ price: parseFloat(search) }]
+                    : [
+                        { title: { $regex: new RegExp(`\\b${search}\\b`, "i") } },
+                        { description: { $regex: new RegExp(`\\b${search}\\b`, "i") } },
+                    ]),
+            ],
+        }));
+        // Counting total documents for pagination details
+        const totalCount = yield schemas_1.Transaction.countDocuments(filter);
+        // @ts-ignore
+        const totalPages = Math.ceil(totalCount / perPage);
+        // Sort options
+        const sortOptions = {};
+        // @ts-ignore
+        sortOptions[sortField] = sortDirection === "asc" ? 1 : -1;
+        const transactions = yield schemas_1.Transaction.find(filter);
+        res.json({
+            transactions,
+            totalCount,
+            currentPage: page,
+            sortField,
+            sortDirection,
+        });
+    }
+    catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+}));
 exports.statsRouter.get("/total", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { month } = yield req.query;
     try {

@@ -22,6 +22,74 @@ statsRouter.get("/init", async (req, res) => {
   }
 });
 
+statsRouter.get("/get", async (req, res) => {
+  try {
+    let {
+      month = "March",
+      search = "",
+      page = 1,
+      perPage = 10,
+      sortField = "dateOfSale",
+      sortDirection = "asc",
+    } = req.query;
+    month = month || "March";
+    const monthNumber = new Date(Date.parse(`${month} 1, 2000`)).getMonth() + 1;
+
+    // @ts-ignore
+    const isNumericSearch = /^[0-9.]+$/.test(search);
+
+    const filter = {
+      $expr: {
+        $eq: [
+          {
+            $month: {
+              $dateFromString: {
+                dateString: { $toString: "$dateOfSale" },
+                format: "%Y-%m-%dT%H:%M:%S.%LZ",
+              },
+            },
+          },
+          monthNumber,
+        ],
+      },
+      ...(search !== "" && {
+        $or: [
+          ...(isNumericSearch
+            ? // @ts-ignore
+              [{ price: parseFloat(search) }]
+            : [
+                { title: { $regex: new RegExp(`\\b${search}\\b`, "i") } },
+                { description: { $regex: new RegExp(`\\b${search}\\b`, "i") } },
+              ]),
+        ],
+      }),
+    };
+
+    // Counting total documents for pagination details
+    const totalCount = await Transaction.countDocuments(filter);
+    // @ts-ignore
+    const totalPages = Math.ceil(totalCount / perPage);
+
+    const sortOptions = {};
+    // @ts-ignore
+    sortOptions[sortField] = sortDirection === "asc" ? 1 : -1;
+
+    const transactions = await Transaction.find(filter);
+
+    res.json({
+      transactions,
+      totalCount,
+
+      currentPage: page,
+      sortField,
+      sortDirection,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
 statsRouter.get("/total", async (req, res) => {
   const { month } = await req.query;
 
