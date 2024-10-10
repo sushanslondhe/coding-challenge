@@ -22,7 +22,7 @@ statsRouter.get("/init", async (req, res) => {
   }
 });
 
-statsRouter.get("/get", async (req, res) => {
+statsRouter.get("/data", async (req, res) => {
   try {
     let {
       month = "March",
@@ -130,7 +130,7 @@ statsRouter.get("/total", async (req, res) => {
   }
 });
 
-statsRouter.get("/barItems", async (req, res) => {
+statsRouter.get("/range", async (req, res) => {
   try {
     let { month } = req.query;
     month = month || "March";
@@ -237,5 +237,36 @@ statsRouter.get("/unique", async (req, res) => {
     });
   } catch (e) {
     console.log("wrong inputs");
+  }
+});
+
+statsRouter.get("/all", async (req, res) => {
+  try {
+    const { month = "March" } = req.query;
+
+    const monthNumber = new Date(`${month} 1, 2000`).getMonth() + 1;
+
+    const baseURL = "http://localhost:3000/api/stats";
+
+    const [data, totalStats, barItems, uniqueCategories] = await Promise.all([
+      axios.get(`${baseURL}/data?month=${monthNumber}`),
+      axios.get(`${baseURL}/total?month=${monthNumber}`),
+      axios.get(`${baseURL}/range?month=${monthNumber}`),
+      axios.get(`${baseURL}/unique?month=${monthNumber}`),
+    ]);
+
+    res.json({
+      data: data.data,
+      totalStats: totalStats.data,
+      barItems: barItems.data,
+      uniqueCategories: uniqueCategories.data,
+    });
+  } catch (error) {
+    console.error("Error fetching stats:", error);
+
+    res.status(500).json({
+      error: "Internal server error",
+      message: error,
+    });
   }
 });

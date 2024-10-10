@@ -32,7 +32,7 @@ exports.statsRouter.get("/init", (req, res) => __awaiter(void 0, void 0, void 0,
         console.log("something went wrong");
     }
 }));
-exports.statsRouter.get("/get", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+exports.statsRouter.get("/data", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let { month = "March", search = "", page = 1, perPage = 10, sortField = "dateOfSale", sortDirection = "asc", } = req.query;
         month = month || "March";
@@ -120,7 +120,7 @@ exports.statsRouter.get("/total", (req, res) => __awaiter(void 0, void 0, void 0
         });
     }
 }));
-exports.statsRouter.get("/barItems", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+exports.statsRouter.get("/range", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let { month } = req.query;
         month = month || "March";
@@ -216,5 +216,31 @@ exports.statsRouter.get("/unique", (req, res) => __awaiter(void 0, void 0, void 
     }
     catch (e) {
         console.log("wrong inputs");
+    }
+}));
+exports.statsRouter.get("/all", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { month = "March" } = req.query;
+        const monthNumber = new Date(`${month} 1, 2000`).getMonth() + 1;
+        const baseURL = "http://localhost:3000/api/stats";
+        const [data, totalStats, barItems, uniqueCategories] = yield Promise.all([
+            axios_1.default.get(`${baseURL}/data?month=${monthNumber}`),
+            axios_1.default.get(`${baseURL}/total?month=${monthNumber}`),
+            axios_1.default.get(`${baseURL}/range?month=${monthNumber}`),
+            axios_1.default.get(`${baseURL}/unique?month=${monthNumber}`),
+        ]);
+        res.json({
+            data: data.data,
+            totalStats: totalStats.data,
+            barItems: barItems.data,
+            uniqueCategories: uniqueCategories.data,
+        });
+    }
+    catch (error) {
+        console.error("Error fetching stats:", error);
+        res.status(500).json({
+            error: "Internal server error",
+            message: error,
+        });
     }
 }));
