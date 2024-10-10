@@ -84,17 +84,19 @@ exports.statsRouter.get("/get", (req, res) => __awaiter(void 0, void 0, void 0, 
     }
 }));
 exports.statsRouter.get("/total", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { month } = yield req.query;
+    let { month } = yield req.query;
+    month = month || "March";
+    const monthNumber = new Date(Date.parse(`${month} 1, 2000`)).getMonth() + 1;
     try {
         const soldItems = yield schemas_1.Transaction.find({
             $expr: {
-                $eq: [{ $month: "$dateOfSale" }, month],
+                $eq: [{ $month: "$dateOfSale" }, monthNumber],
             },
         });
         const countSold = yield schemas_1.Transaction.countDocuments({
             sold: true,
             $expr: {
-                $eq: [{ $month: "$dateOfSale" }, month],
+                $eq: [{ $month: "$dateOfSale" }, monthNumber],
             },
         });
         const totalSaleAmount = soldItems.reduce(
@@ -103,7 +105,7 @@ exports.statsRouter.get("/total", (req, res) => __awaiter(void 0, void 0, void 0
         const unsoldItems = yield schemas_1.Transaction.countDocuments({
             sold: false,
             $expr: {
-                $eq: [{ $month: "$dateOfSale" }, month],
+                $eq: [{ $month: "$dateOfSale" }, monthNumber],
             },
         });
         res.json({
@@ -116,5 +118,103 @@ exports.statsRouter.get("/total", (req, res) => __awaiter(void 0, void 0, void 0
         res.json({
             msg: "error! something went wrong",
         });
+    }
+}));
+exports.statsRouter.get("/barItems", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        let { month } = req.query;
+        month = month || "March";
+        const monthNumber = new Date(Date.parse(`${month} 1, 2000`)).getMonth() + 1;
+        // Defining price ranges
+        const priceRanges = [
+            { min: 0, max: 100 },
+            { min: 101, max: 200 },
+            { min: 201, max: 300 },
+            { min: 301, max: 400 },
+            { min: 401, max: 500 },
+            { min: 501, max: 600 },
+            { min: 601, max: 700 },
+            { min: 701, max: 800 },
+            { min: 801, max: 900 },
+            { min: 901, max: Infinity }, // For items with a price above 900
+        ];
+        const priceRangeCounts = new Array(priceRanges.length).fill(0);
+        const aggregationResult = yield schemas_1.Transaction.aggregate([
+            {
+                $match: {
+                    $expr: {
+                        $eq: [
+                            {
+                                $month: {
+                                    $dateFromString: {
+                                        dateString: { $toString: "$dateOfSale" },
+                                        format: "%Y-%m-%dT%H:%M:%S.%LZ",
+                                    },
+                                },
+                            },
+                            monthNumber,
+                        ],
+                    },
+                },
+            },
+            {
+                $group: {
+                    _id: null,
+                    prices: { $push: "$price" },
+                },
+            },
+        ]);
+        const prices = aggregationResult.length > 0 ? aggregationResult[0].prices : [];
+        // @ts-ignore
+        prices.forEach((price) => {
+            for (let i = 0; i < priceRanges.length; i++) {
+                if (price >= priceRanges[i].min && price <= priceRanges[i].max) {
+                    priceRangeCounts[i]++;
+                    break;
+                }
+            }
+        });
+        const response = priceRanges.map((range, index) => ({
+            range: `${range.min} - ${range.max === Infinity ? "above" : range.max}`,
+            count: priceRangeCounts[index],
+        }));
+        res.json(response);
+    }
+    catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+}));
+exports.statsRouter.get("/unique", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        let { month } = req.query;
+        month = month || "March";
+        const monthNumber = new Date(Date.parse(`${month} 1, 2000`)).getMonth() + 1;
+        const response = yield schemas_1.Transaction.find({
+            $expr: {
+                $eq: [{ $month: "$dateOfSale" }, monthNumber],
+            },
+        });
+        let categoriesCount = {};
+        response.forEach((item) => {
+            if (item.category) {
+                const category = item.category;
+                // @ts-ignore
+                if (categoriesCount[category]) {
+                    // @ts-ignore
+                    categoriesCount[category]++;
+                }
+                else {
+                    // @ts-ignore
+                    categoriesCount[category] = 1;
+                }
+            }
+        });
+        res.json({
+            UniqueCategories: categoriesCount,
+        });
+    }
+    catch (e) {
+        console.log("wrong inputs");
     }
 }));
