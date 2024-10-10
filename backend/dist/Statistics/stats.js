@@ -35,7 +35,7 @@ exports.statsRouter.get("/init", (req, res) => __awaiter(void 0, void 0, void 0,
 exports.statsRouter.get("/data", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let { month = "March", search = "", page = 1, perPage = 10, sortField = "dateOfSale", sortDirection = "asc", } = req.query;
-        month = month || "March";
+        month = month || "";
         const monthNumber = new Date(Date.parse(`${month} 1, 2000`)).getMonth() + 1;
         // @ts-ignore
         const isNumericSearch = /^[0-9.]+$/.test(search);

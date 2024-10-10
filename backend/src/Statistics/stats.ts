@@ -32,7 +32,7 @@ statsRouter.get("/data", async (req, res) => {
       sortField = "dateOfSale",
       sortDirection = "asc",
     } = req.query;
-    month = month || "March";
+    month = month || "";
     const monthNumber = new Date(Date.parse(`${month} 1, 2000`)).getMonth() + 1;
 
     // @ts-ignore
