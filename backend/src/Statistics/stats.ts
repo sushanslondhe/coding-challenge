@@ -95,7 +95,6 @@ statsRouter.get("/total", async (req, res) => {
 
   try {
     const soldItems = await Transaction.find({
-      sold: true,
       $expr: {
         $eq: [{ $month: "$dateOfSale" }, month],
       },

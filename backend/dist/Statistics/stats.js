@@ -37,18 +37,6 @@ exports.statsRouter.get("/get", (req, res) => __awaiter(void 0, void 0, void 0, 
         let { month = "March", search = "", page = 1, perPage = 10, sortField = "dateOfSale", sortDirection = "asc", } = req.query;
         month = month || "March";
         const monthNumber = new Date(Date.parse(`${month} 1, 2000`)).getMonth() + 1;
-        // Validating the month parameter
-        // if (!(monthNumber >= 1 && monthNumber <= 12)) {
-        //   return res.status(400).json({
-        //     error: "Invalid month parameter. Please provide a valid month.",
-        //   });
-        // }
-        // Validating pagination parameters
-        // if (page < 1 || perPage < 1) {
-        //   return res.status(400).json({
-        //     error: "Invalid pagination parameters. Please provide valid values.",
-        //   });
-        // }
         // @ts-ignore
         const isNumericSearch = /^[0-9.]+$/.test(search);
         const filter = Object.assign({ $expr: {
@@ -78,7 +66,6 @@ exports.statsRouter.get("/get", (req, res) => __awaiter(void 0, void 0, void 0, 
         const totalCount = yield schemas_1.Transaction.countDocuments(filter);
         // @ts-ignore
         const totalPages = Math.ceil(totalCount / perPage);
-        // Sort options
         const sortOptions = {};
         // @ts-ignore
         sortOptions[sortField] = sortDirection === "asc" ? 1 : -1;
@@ -100,7 +87,6 @@ exports.statsRouter.get("/total", (req, res) => __awaiter(void 0, void 0, void 0
     const { month } = yield req.query;
     try {
         const soldItems = yield schemas_1.Transaction.find({
-            sold: true,
             $expr: {
                 $eq: [{ $month: "$dateOfSale" }, month],
             },

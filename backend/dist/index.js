@@ -17,7 +17,7 @@ app.get("/", (req, res) => {
 });
 app.use("/api/stats", stats_1.statsRouter);
 mongoose_1.default
-    .connect("mongodb://localhost:27017/new3")
+    .connect("mongodb://localhost:27017/neww")
     .then(() => {
     app.listen(3000, () => {
         console.log("port connected on 3000");
