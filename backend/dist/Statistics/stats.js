@@ -62,7 +62,6 @@ exports.statsRouter.get("/data", (req, res) => __awaiter(void 0, void 0, void 0,
                     ]),
             ],
         }));
-        // Counting total documents for pagination details
         const totalCount = yield schemas_1.Transaction.countDocuments(filter);
         // @ts-ignore
         const totalPages = Math.ceil(totalCount / perPage);
@@ -211,6 +210,7 @@ exports.statsRouter.get("/unique", (req, res) => __awaiter(void 0, void 0, void 
             }
         });
         res.json({
+            // @ts-ignore
             UniqueCategories: categoriesCount,
         });
     }
@@ -222,7 +222,7 @@ exports.statsRouter.get("/all", (req, res) => __awaiter(void 0, void 0, void 0, 
     try {
         const { month = "March" } = req.query;
         const monthNumber = new Date(`${month} 1, 2000`).getMonth() + 1;
-        const baseURL = "http://localhost:3000/api/stats";
+        const baseURL = "http://localhost:3010/api/stats";
         const [data, totalStats, barItems, uniqueCategories] = yield Promise.all([
             axios_1.default.get(`${baseURL}/data?month=${monthNumber}`),
             axios_1.default.get(`${baseURL}/total?month=${monthNumber}`),
@@ -233,7 +233,7 @@ exports.statsRouter.get("/all", (req, res) => __awaiter(void 0, void 0, void 0, 
             data: data.data,
             totalStats: totalStats.data,
             barItems: barItems.data,
-            uniqueCategories: uniqueCategories.data,
+            uniqueCategories: uniqueCategories.data.UniqueCategories,
         });
     }
     catch (error) {

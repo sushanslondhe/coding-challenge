@@ -16,12 +16,13 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/stats", statsRouter);
+const port = 3010;
 
 mongoose
-  .connect("mongodb://localhost:27017/abc")
+  .connect("mongodb://localhost:27017/man")
   .then(() => {
-    app.listen(3010, () => {
-      console.log("port connected on 3000");
+    app.listen(port, () => {
+      console.log(`port connected on ${port}`);
     });
   })
   .catch((err) => console.error("Failed to connect to MongoDb", err));

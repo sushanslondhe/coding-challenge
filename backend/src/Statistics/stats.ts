@@ -65,7 +65,6 @@ statsRouter.get("/data", async (req, res) => {
       }),
     };
 
-    // Counting total documents for pagination details
     const totalCount = await Transaction.countDocuments(filter);
     // @ts-ignore
     const totalPages = Math.ceil(totalCount / perPage);
@@ -233,6 +232,7 @@ statsRouter.get("/unique", async (req, res) => {
     });
 
     res.json({
+      // @ts-ignore
       UniqueCategories: categoriesCount,
     });
   } catch (e) {
@@ -246,7 +246,7 @@ statsRouter.get("/all", async (req, res) => {
 
     const monthNumber = new Date(`${month} 1, 2000`).getMonth() + 1;
 
-    const baseURL = "http://localhost:3000/api/stats";
+    const baseURL = "http://localhost:3010/api/stats";
 
     const [data, totalStats, barItems, uniqueCategories] = await Promise.all([
       axios.get(`${baseURL}/data?month=${monthNumber}`),
@@ -259,7 +259,7 @@ statsRouter.get("/all", async (req, res) => {
       data: data.data,
       totalStats: totalStats.data,
       barItems: barItems.data,
-      uniqueCategories: uniqueCategories.data,
+      uniqueCategories: uniqueCategories.data.UniqueCategories,
     });
   } catch (error) {
     console.error("Error fetching stats:", error);
